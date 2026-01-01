@@ -1,6 +1,6 @@
-mod uci;
 mod chess;
+mod uci;
 
 fn main() {
-   uci::engineLoop::run_uci();
+    uci::engineLoop::run_uci();
 }

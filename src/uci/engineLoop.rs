@@ -1,24 +1,26 @@
-use std::io:: {self, BufRead, Write};
-use std::sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}};
-use std::thread;
-use std::fmt::Display;
 use crate::chess::core::board::Board;
 use crate::chess::search::search::search;
 use crate::uci::parser::parse_position;
+use std::fmt::Display;
+use std::io::{self, BufRead, Write};
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
+};
+use std::thread;
 
 pub fn run_uci() {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     let stop_flag = Arc::new(AtomicBool::new(false));
-    
-    
+
     let mut board = Board::new(); // board stuct
-    
+
     for line in stdin.lock().lines() {
         let line = line.unwrap();
         let mut tokens = line.split_whitespace();
-        
-        match tokens.next(){
+
+        match tokens.next() {
             Some("uci") => {
                 writeln!(stdout, "id name Niraj").unwrap();
                 writeln!(stdout, "id author Ibn Carlton").unwrap();
@@ -28,7 +30,7 @@ pub fn run_uci() {
             Some("ucinewgame") => {
                 board.reset();
             }
-            Some ("position") => {
+            Some("position") => {
                 // parse fen or startpos and moves
                 parse_position(&mut board, tokens.collect::<Vec<_>>());
             }
@@ -38,7 +40,7 @@ pub fn run_uci() {
 
                 let stop_clone = Arc::clone(&stop_flag);
                 thread::spawn(move || {
-                    let best = search (&board_clone, stop_clone);
+                    let best = search(&board_clone, stop_clone);
                     println!("bestmove {:?}", best);
                 });
             }
@@ -51,9 +53,7 @@ pub fn run_uci() {
             Some("quit") => {
                 break;
             }
-            _=>{}
-
+            _ => {}
         }
     }
-
 }
