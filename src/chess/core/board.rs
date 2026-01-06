@@ -58,7 +58,7 @@ impl Board {
     }
 }
 
-fn print_bitboard(bitboard: u64) {
+pub fn print_bitboard(bitboard: u64) {
     const LAST_BIT: u64 = 63;
     for rank in 0..8 {
         for file in (0..8).rev() {
@@ -69,4 +69,26 @@ fn print_bitboard(bitboard: u64) {
 
         println!();
     }
+
 }
+
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn white_pawn_on_e2() {
+        let mut board = Board::new();
+        board.bb_pieces[Sides::WHITE][Pieces::Pawn as usize] = 1u64 << 12;
+
+        print_bitboard(board.get_pieces(
+            Sides::WHITE,
+            Pieces::Pawn as usize,
+        ));
+    }
+}
+
+
