@@ -10,7 +10,7 @@ impl Sides {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Pieces {
     King = 0,
     Queen = 1,
@@ -36,9 +36,11 @@ pub enum Colour {
 
 #[derive(Clone)]
 pub struct Board {
-    // [colour] [piece]
-    pub bb_pieces: [[u64; 6]; 2],
-    pub bb_side: [Bitboard; Sides::BOTH], // holds two bitboards
+    // [colour][piece]
+    pub bb_pieces: [[Bitboard; 6]; 2],
+    pub bb_side: [Bitboard; Sides::BOTH],
+    pub occupancy: [Bitboard; 2],
+    pub piece_list: [Pieces; 64],
 }
 
 impl Board {
@@ -46,6 +48,8 @@ impl Board {
         Self {
             bb_pieces: [[0; 6]; 2],
             bb_side: [0; 2],
+            occupancy: [0; 2],
+            piece_list: [Pieces::None; 64],
         }
     }
 
@@ -55,6 +59,32 @@ impl Board {
 
     pub fn get_pieces(&self, side: Side, piece: Piece) -> Bitboard {
         self.bb_pieces[side][piece]
+    }
+
+    /// Build the piece list from bitboards
+    pub fn init_piece_list(&mut self) {
+        self.piece_list = [Pieces::None; 64];
+
+        for side in 0..2 {
+            for piece in 0..6 {
+                let mut bb = self.bb_pieces[side][piece];
+
+                while bb != 0 {
+                    let sq = bb.trailing_zeros() as usize;
+                    bb &= bb - 1;
+
+                    self.piece_list[sq] = match piece {
+                        0 => Pieces::King,
+                        1 => Pieces::Queen,
+                        2 => Pieces::Rook,
+                        3 => Pieces::Bishop,
+                        4 => Pieces::Knight,
+                        5 => Pieces::Pawn,
+                        _ => Pieces::None,
+                    };
+                }
+            }
+        }
     }
 }
 
@@ -66,14 +96,9 @@ pub fn print_bitboard(bitboard: u64) {
             let ch = if bitboard & mask != 0 { '1' } else { '0' };
             print!("{ch}");
         }
-
         println!();
     }
-
 }
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -82,7 +107,13 @@ mod tests {
     #[test]
     fn white_pawn_on_e2() {
         let mut board = Board::new();
+
+        // E2 = square 12 in your mapping
         board.bb_pieces[Sides::WHITE][Pieces::Pawn as usize] = 1u64 << 12;
+
+        board.init_piece_list();
+
+        assert_eq!(board.piece_list[12], Pieces::Pawn);
 
         print_bitboard(board.get_pieces(
             Sides::WHITE,
@@ -90,5 +121,4 @@ mod tests {
         ));
     }
 }
-
 
